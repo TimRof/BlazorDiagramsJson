@@ -1,0 +1,183 @@
+﻿@page "/"
+@using BlazorDiagramsJson.Model
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+
+@inject ProtectedLocalStorage BrowserStorage
+@inject ILogger<Counter> logger
+
+<!-- Add this where you want to show the diagram -->
+<div class="wrapper">
+    <CascadingValue Value="_diagram">
+        <div class="diagram-container">
+            <DiagramCanvas></DiagramCanvas>
+        </div>
+    </CascadingValue>
+</div>
+<button @onclick="Serialize">Serialise</button>
+<button @onclick="LoadDiagramFromBrowserStorage">Load</button>
+<button @onclick="DeleteDiagramFromBrowserStorage">Delete local</button>
+
+@code {
+    JsonSerializer jsonSerializer = new();
+
+    private DiagramSerialize? _savedDiagram;
+
+    private Diagram _diagram { get; set; }
+
+    private DiagramOptions options = new DiagramOptions
+        {
+            DeleteKey = "Delete", // What key deletes the selected nodes/links
+            DefaultNodeComponent = null, // Default component for nodes
+            AllowMultiSelection = true, // Whether to allow multi selection using CTRL
+            Links = new DiagramLinkOptions
+            {
+                // Options related to links
+            },
+            Zoom = new DiagramZoomOptions
+            {
+                Minimum = 0.5, // Minimum zoom value
+                Inverse = false, // Whether to inverse the direction of the zoom when using the wheel
+                                 // Other
+            }
+        };
+
+    private async Task SaveDiagram(string json)
+    {
+        logger.LogInformation("Saving to browser storage");
+        await BrowserStorage.SetAsync("savedDiagram", json);
+    }
+    private async Task LoadDiagramFromBrowserStorage()
+    {
+        logger.LogInformation("Loading from storage");
+        var result = await BrowserStorage.GetAsync<string>("savedDiagram");
+        if (result.Success)
+        {
+            logger.LogInformation("Loaded succesfully from storage");
+
+            _savedDiagram = jsonSerializer.ReadDiagramFromJson(result.Value);
+            FillDiagram();
+        }
+        else
+        {
+            logger.LogWarning("Loading from storage failed");
+
+            // show error
+        }
+    }
+    private async Task DeleteDiagramFromBrowserStorage()
+    {
+        logger.LogInformation("Deleting from storage");
+        await BrowserStorage.DeleteAsync("savedDiagram");
+        logger.LogInformation("Deleting from storage success"); // check for success
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _diagram = new Diagram(options);
+
+        Setup();
+    }
+    private void FillDiagram()
+    {
+        if (_savedDiagram == null)
+        {
+            // exception
+            return;
+        }
+        // clear diagram
+        _diagram.Nodes.Clear();
+
+        DrawNodes();
+        DrawLinks();
+    }
+    private void DrawNodes()
+    {
+        foreach (var savedNode in _savedDiagram.Nodes)
+        {
+            // check for node type if custom nodes
+
+            NodeModel node = new NodeModel(savedNode.Id, savedNode.Position);
+            if (!String.IsNullOrEmpty(savedNode.Title))
+            {
+                node.Title = savedNode.Title;
+            }
+            foreach (var port in savedNode.Ports)
+            {
+                //node.AddPort(new PortModel(port.Id, port.Alignment)); // no constructor
+                node.AddPort(port.Alignment); // changes port id, but id not needed?
+            }
+            _diagram.Nodes.Add(node);
+        }
+    }
+    private void DrawLinks()
+    {
+        foreach (var link in _savedDiagram.Links)
+        {
+            // problem with custom components? probably have to type check
+            NodeModel sourceNode = null;
+            NodeModel targetNode = null;
+
+            var diagramEnumerator = _diagram.Nodes.GetEnumerator(); // annoying
+            while (diagramEnumerator.MoveNext())
+            {
+                object item = diagramEnumerator.Current;
+                NodeModel node = (NodeModel)item; // ugly
+                if (sourceNode == null && node.Id == link.SourceNode)
+                {
+                    sourceNode = node;
+                }
+                else if (targetNode == null && node.Id == link.TargetNode)
+                {
+                    targetNode = node;
+                }
+                if (sourceNode != null && targetNode != null)
+                {
+                    _diagram.Links.Add(new LinkModel(sourceNode.GetPort(link.SourcePortAlignment), targetNode.GetPort(link.TargetPortAlignment)));
+                    break;
+                }
+            }
+        }
+    }
+    private async Task Serialize()
+    {
+        logger.LogInformation("Saving to local storage");
+        string json = jsonSerializer.WriteToFile(_diagram); // only saving once per page load? not a problem when using database/file save/browser storage
+        await SaveDiagram(json);
+        logger.LogInformation("Successfully saved");
+    }
+    private void Setup()
+    {
+        var node1 = NewNode(50, 50);
+        var node2 = NewNode2(300, 300);
+        var node3 = NewNode3(300, 50);
+        node3.Title = "findthisnode";
+        _diagram.Nodes.Add(new[] { node1, node2, node3 });
+        _diagram.Links.Add(new LinkModel(node1.GetPort(PortAlignment.Right), node2.GetPort(PortAlignment.Left)));
+    }
+
+    private NodeModel NewNode(double x, double y)
+    {
+        var node = new NodeModel(new Point(x, y));
+        node.AddPort(PortAlignment.Bottom);
+        node.AddPort(PortAlignment.Top);
+        node.AddPort(PortAlignment.Left);
+        node.AddPort(PortAlignment.Right);
+        return node;
+    }
+    private NodeModel NewNode2(double x, double y)
+    {
+        var node = new NodeModel(new Point(x, y));
+        node.AddPort(PortAlignment.Bottom);
+        node.AddPort(PortAlignment.Left);
+        node.AddPort(PortAlignment.Right);
+        return node;
+    }
+    private NodeModel NewNode3(double x, double y)
+    {
+        var node = new NodeModel(new Point(x, y));
+        node.AddPort(PortAlignment.Bottom);
+        return node;
+    }
+}
