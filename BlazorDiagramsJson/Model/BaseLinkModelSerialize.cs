@@ -10,8 +10,8 @@ namespace BlazorDiagramsJson.Model
             TargetPortAlignment = targetPortAlignment;
             SourceNode = sourceNode;
             TargetNode = targetNode;
-            SourcePort = sourcePort;
-            TargetPort = targetPort;
+            //SourcePort = sourcePort;
+            //TargetPort = targetPort;
         }
         public PortAlignment SourcePortAlignment { get; set; }
         public PortAlignment TargetPortAlignment { get; set; }
@@ -19,8 +19,8 @@ namespace BlazorDiagramsJson.Model
 
         public string? TargetNode { get; private set; }
 
-        public string? SourcePort { get; private set; }
+        //public string? SourcePort { get; private set; }
 
-        public string? TargetPort { get; private set; }
+        //public string? TargetPort { get; private set; }
     }
 }

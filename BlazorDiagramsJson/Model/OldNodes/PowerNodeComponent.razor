@@ -1,0 +1,26 @@
+﻿@using BlazorDiagramsJson.Model.Nodes
+<div class="custom-node @(Node.Selected ? " selected" : "")">
+    <div class="card" style="width: 250px;">
+        <div class="card-body">
+            <h5 class="card-title">Power Node</h5>
+            <div class="form-group">
+                <div class="form-check form-switch">
+                    <label class="form-check-label" for="powerSwitch">Power</label>
+                    <input @bind-value="@Node.HasPower" class="form-check-input" type="checkbox" role="switch" id="powerSwitch" />
+                </div>
+            </div>
+            Status: @(Node.HasPower ? "On" : "Off")
+        </div>
+        @foreach (var port in Node.Ports)
+        {
+            <PortRenderer Port="port"></PortRenderer>
+        }
+    </div>
+
+
+</div>
+
+@code {
+    [Parameter]
+    public PowerNode Node { get; set; }
+}

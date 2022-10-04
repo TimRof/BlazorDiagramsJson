@@ -1,0 +1,19 @@
+﻿<div class="custom-node @(Node.Selected ? " selected" : "")">
+    <div class="card" style="width: 250px;">
+        <div class="card-body">
+            <h5 class="card-title">Data Node</h5>
+            <div class="form-group">
+            </div>
+        </div>
+    </div>
+
+    @foreach (var port in Node.Ports)
+    {
+        <PortRenderer Port="port"></PortRenderer>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public DataNode Node { get; set; }
+}

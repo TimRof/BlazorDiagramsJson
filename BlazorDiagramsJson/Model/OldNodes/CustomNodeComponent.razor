@@ -1,0 +1,33 @@
+﻿<div class="custom-node @(Node.Selected ? " selected" : "")">
+    <div class="card" style="width: 250px;">
+        <div class="card-body">
+            <h5 class="card-title">Calculate</h5>
+            <div class="form-group">
+                <input type="number" class="form-control"
+                       @bind-value="Node.FirstNumber"
+                       placeholder="First number"
+                       @onmousedown:stopPropagation
+                       @onmouseup:stopPropagation
+                       @onmousemove:stopPropagation />
+                <input type="number" class="form-control"
+                       @bind-value="Node.SecondNumber"
+                       placeholder="Second number"
+                       @onmousedown:stopPropagation
+                       @onmouseup:stopPropagation
+                       @onmousemove:stopPropagation />
+                       @Node.Calculate()
+            </div>
+        </div>
+        @foreach (var port in Node.Ports)
+        {
+            <PortRenderer Port="port"></PortRenderer>
+        }
+    </div>
+
+    
+</div>
+
+@code {
+    [Parameter]
+    public CustomNodeCopy Node { get; set; }
+}
