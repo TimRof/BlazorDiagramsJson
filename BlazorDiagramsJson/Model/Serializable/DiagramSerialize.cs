@@ -2,7 +2,7 @@
 using Blazor.Diagrams.Core;
 using Blazor.Diagrams.Core.Layers;
 
-namespace BlazorDiagramsJson.Model
+namespace BlazorDiagramsJson.Model.Serializable
 {
     public class DiagramSerialize
     {

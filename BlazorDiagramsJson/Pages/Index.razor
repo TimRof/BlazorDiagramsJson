@@ -1,94 +1,46 @@
 ﻿@page "/"
 @using Blazor.Diagrams.Core.Models.Base
+@using BlazorDiagramsJson.Components
 @using BlazorDiagramsJson.Model
 @using BlazorDiagramsJson.Model.Nodes
 @using BlazorDiagramsJson.Model.OldNodes
+@using BlazorDiagramsJson.Model.Serializable
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 
 @inject ProtectedLocalStorage BrowserStorage
-@inject ILogger<Counter> logger
+@inject ILogger<Index> logger
 
-<div class="col-4">
-    <div class="collapse @(IsVisible ? "show" : "")">
-        <div class="card card-body">
-            <div class="mb-2">
-                <label for="nodeTitle">Node Title:</label>
-                <input type="text" @bind-value="_nodeTitle" placeholder="Leave blank for default" id="nodeTitle" />
-            </div>
-            <div class="col-6" style="border-color: green;border-style:solid;">
-                <div class="text-center" draggable="true" @ondragstart="() => OnDragStart(0)">
-                    <span>Start Node</span>
-                </div>
-            </div>
-            <div class="col-6" style="border-color: red;border-style:solid;">
-                <div class="text-center" draggable="true" @ondragstart="() => OnDragStart(1)">
-                    <span>End Node</span>
-                </div>
-            </div>
-            <div class="col-6" style="border-color: black;border-style:solid;">
-                <div class="text-center" draggable="true" @ondragstart="() => OnDragStart(2)">
-                    <span>Data Node</span>
-                </div>
-            </div>
-            <div class="col-6" style="border-color: orange;border-style:solid;">
-                <div class="text-center" draggable="true" @ondragstart="() => OnDragStart(3)">
-                    <span>Power Node</span>
-                </div>
-            </div>
-            <div class="col-6" style="border-color: blue;border-style:solid;">
-                <div class="text-center" draggable="true" @ondragstart="() => OnDragStart(4)">
-                    <span>Default Node</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div>
-        <button class="btn btn-success" @onclick="Serialize">Save</button>
-        <button class="btn btn-warning" @onclick="LoadDiagramFromBrowserStorage">Load</button>
-        <button class="btn btn-danger" @onclick="DeleteDiagramFromBrowserStorage">Delete local</button>
-        <button class="btn btn-primary" data-toggle="collapse" @onclick="@(() => { IsVisible = !IsVisible; })">Nodes Drawer</button>
-        <button class="btn btn-dark" @onclick="() => _diagram.ZoomToFit(50)">Zoom to fit</button>
-    </div>
-</div>
-<div class="wrapper" ondragover="event.preventDefault();" @ondragover:preventDefault @ondrop="OnDrop">
-    <div class="diagram-container">
-        <CascadingValue Value="_diagram">
-            <DiagramCanvas>
-                <Widgets><NavigatorWidget Width="200" Height="133" DefaultStyle="true"></NavigatorWidget></Widgets>
-            </DiagramCanvas>
-        </CascadingValue>
-    </div>
-</div>
+<WarningDialog @ref="_warningModal"></WarningDialog>
+
+<SideMenu OnDragNode="ChangeNodeToAdd"
+          OnNodeAdd="OnNodeAddClick"
+          @bind-NodeTitle="_nodeTitle"
+          OnSaveDiagramMethod="SaveDiagram"
+          OnLoadDiagramMethod="LoadDiagramFromBrowserStorage"
+          OnDeleteDiagramMethod="DeleteDiagramFromBrowserStorage"
+          OnZoomToFitMethod="ZoomToFit"></SideMenu>
+
+<DiagramComponent OnNodeDrop="OnDrop" @bind-Diagram="_diagram"></DiagramComponent>
 
 @code {
-    protected bool IsVisible { get; set; }
-
-    JsonSerializer jsonSerializer = new();
-
+    private WarningDialog? _warningModal;
+    private Diagram? _diagram { get; set; }
     private DiagramSerialize? _savedDiagram;
 
-    private Diagram _diagram { get; set; }
-    private int? _draggedType;
+    private JsonSerializer _jsonSerializer = new();
+
+    private string? _selectedNodeId;
+    private bool _nodeSelected;
+    private int? _nodeToAdd;
     private string? _nodeTitle;
 
-    private DiagramOptions options = new DiagramOptions
-        {
-            DeleteKey = "Delete", // What key deletes the selected nodes/links
-            DefaultNodeComponent = null, // Default component for nodes
-            AllowMultiSelection = true, // Whether to allow multi selection using CTRL
-            Zoom = new DiagramZoomOptions
-            {
-                Minimum = 0.5, // Minimum zoom value
-                Inverse = true, // Whether to inverse the direction of the zoom when using the wheel
-                                // Other
-            },
-            GridSize = 50
-        };
+    /* Setup & Utilities */
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
 
-        _diagram = new Diagram(options);
+        _diagram = new Diagram(new DefaultDiagramOptions().GetDefaultOptions());
 
         _diagram.RegisterModelComponent<StartNode, StartNodeComponent>();
         _diagram.RegisterModelComponent<EndNode, EndNodeComponent>();
@@ -96,65 +48,56 @@
         _diagram.RegisterModelComponent<PowerNode, PowerNodeComponent>();
 
         HelloNode();
-        //RegisterEvents();
-    }
-    private void HelloNode()
-    {
-        var node = new NodeModel(new Point(25, 25));
-        node.Title = "Hello 🙂";
-        _diagram.Nodes.Add(node);
-    }
-    private async Task SaveDiagram(string json)
-    {
-        logger.LogInformation("Saving to browser storage");
-        await BrowserStorage.SetAsync("savedDiagram", json);
+        RegisterEvents();
     }
     private void RegisterEvents()
     {
+        _diagram.Changed += () => { };
+
+        _diagram.Nodes.Added += (n) => { };
+        _diagram.Nodes.Removed += (n) => { };
+
+        _diagram.SelectionChanged += (m) =>
+        {
+            _selectedNodeId = m.Id;
+            _nodeSelected = m.Selected;
+        };
+
         _diagram.Links.Added += (l) => { };
+
         _diagram.Links.Removed += (l) => { };
+
+        _diagram.MouseDown += (m, e) => { };
+
+        _diagram.MouseUp += (m, e) => { };
+
+        _diagram.TouchStart += (m, e) => { };
+
+        _diagram.TouchEnd += (m, e) => { };
+
+        _diagram.MouseClick += (m, e) => { };
+
+        _diagram.MouseDoubleClick += (m, e) => { };
+    }
+    private void ZoomToFit()
+    {
+        logger.LogInformation("Zoom to fit diagram");
+        _diagram.ZoomToFit(50);
     }
 
-    private async Task LoadDiagramFromBrowserStorage()
+    /* --- */
+
+
+
+    /* Choose Node Logic */
+
+    private void AddNodeToDiagram(Point? position = null)
     {
-        logger.LogInformation("Loading from storage");
-        var result = await BrowserStorage.GetAsync<string>("savedDiagram");
-        if (result.Success)
+        if (position == null)
         {
-            logger.LogInformation("Loaded succesfully from storage");
-
-            _savedDiagram = jsonSerializer.ReadDiagramFromJson(result.Value);
-            FillDiagram();
+            position = new(50, 50);
         }
-        else
-        {
-            logger.LogWarning("Loading from storage failed");
-
-            // show error
-        }
-    }
-    private async Task DeleteDiagramFromBrowserStorage()
-    {
-        logger.LogInformation("Deleting from storage");
-        await BrowserStorage.DeleteAsync("savedDiagram");
-        logger.LogInformation("Deleting from storage success"); // check for success
-    }
-
-
-    private void OnDragStart(int key)
-    {
-        _draggedType = key;
-    }
-
-    private void OnDrop(DragEventArgs e)
-    {
-        if (_draggedType == null) // Unknown item
-            return;
-
-        var position = _diagram.GetRelativeMousePoint(e.ClientX, e.ClientY);
-        NodeModel? node = null;
-
-        switch (_draggedType) // own method
+        switch (_nodeToAdd) // own method
         {
             case 0:
                 DrawStartNode(position);
@@ -171,46 +114,73 @@
             case 4:
                 DrawNodeModel(position);
                 break;
-
         };
-        _draggedType = null;
     }
-    private void DrawNodeModel(Point position)
+    private void OnNodeAddClick(int key)
     {
-        var node = new NodeModel(position);
-        node.AddPort(PortAlignment.Top);
-        node.AddPort(PortAlignment.Right);
-        node.AddPort(PortAlignment.Bottom);
-        node.AddPort(PortAlignment.Left);
-        node.Title = SetNodeTitle();
+        ChangeNodeToAdd(key);
+        AddNodeToDiagram();
+    }
+    private void ChangeNodeToAdd(int key)
+    {
+        _nodeToAdd = key;
+    }
+    private void OnDrop(DragEventArgs e)
+    {
+        if (_nodeToAdd == null) // Unknown item
+            return;
+
+        Point position = RoundPositionToNearestGridSize(e.ClientX, e.ClientY);
+
+        AddNodeToDiagram(position);
+
+        _nodeToAdd = null;
+    }
+    private Point RoundPositionToNearestGridSize(double x, double y)
+    {
+        Point relativePoint = _diagram.GetRelativeMousePoint(x, y);
+        return new Point(RoundToNearestGridSize(relativePoint.X), RoundToNearestGridSize(relativePoint.Y));
+    }
+    private double RoundToNearestGridSize(double n)
+    {
+        double gridSize = _diagram.Options.GridSize.GetValueOrDefault();
+        if (_diagram.Options.GridSize == null)
+        {
+            return n;
+        }
+        var rounded = Math.Floor(n / gridSize) * gridSize;
+        return rounded;
+    }
+    private string SetNodeTitle()
+    {
+        if (!String.IsNullOrEmpty(_nodeTitle))
+        {
+            return _nodeTitle;
+        }
+        return null;
+    }
+
+    /* --- */
+
+
+
+    /* Nodes */
+
+    private void HelloNode()
+    {
+        var node = new NodeModel(new Point(25, 25));
+        node.Title = "Hello 🙂";
         _diagram.Nodes.Add(node);
     }
-    private void DrawStartNode(Point position)
+    private void DrawStartNode(Point? position = null)
     {
+        if (_diagram.Nodes.OfType<StartNode>().Any())
+        {
+            logger.LogWarning("StartNode already present");
+            _warningModal.Open("Er kan maximaal één Start Node zijn.");
+            return;
+        }
         var node = new StartNode(position);
-        node.AddPort(PortAlignment.Bottom);
-        node.Title = SetNodeTitle();
-        _diagram.Nodes.Add(node);
-    }
-    private void DrawEndNode(Point position)
-    {
-        var node = new EndNode(position);
-        node.AddPort(PortAlignment.Top);
-        node.Title = SetNodeTitle();
-        _diagram.Nodes.Add(node);
-    }
-    private void DrawDataNode(Point position)
-    {
-        var node = new DataNode(position);
-        node.AddPort(PortAlignment.Top);
-        node.AddPort(PortAlignment.Bottom);
-        node.Title = SetNodeTitle();
-        _diagram.Nodes.Add(node);
-    }
-    private void DrawPowerNode(Point position)
-    {
-        var node = new PowerNode(position);
-        node.AddPort(PortAlignment.Top);
         node.AddPort(PortAlignment.Bottom);
         node.Title = SetNodeTitle();
         _diagram.Nodes.Add(node);
@@ -222,11 +192,49 @@
         node.Title = savedNode.Title;
         _diagram.Nodes.Add(node);
     }
+    private void DrawEndNode(Point position)
+    {
+        var node = new EndNode(position);
+        node.AddPort(PortAlignment.Top);
+        node.Title = SetNodeTitle();
+        _diagram.Nodes.Add(node);
+    }
     private void LoadEndNode(NodeSerialize savedNode)
     {
         var node = new EndNode(savedNode.Id, savedNode.Position);
         node.AddPort(PortAlignment.Top);
         node.Title = savedNode.Title;
+        _diagram.Nodes.Add(node);
+    }
+    private void DrawNodeModel(Point position)
+    {
+        var node = new NodeModel(position);
+        node.AddPort(PortAlignment.Top);
+        node.AddPort(PortAlignment.Right);
+        node.AddPort(PortAlignment.Bottom);
+        node.AddPort(PortAlignment.Left);
+        node.Title = SetNodeTitle();
+        _diagram.Nodes.Add(node);
+    }
+    private void DrawNodeModel(NodeSerialize savedNode) // "old" code with dynamic ports
+    {
+        NodeModel node = new NodeModel(savedNode.Id, savedNode.Position);
+        if (!String.IsNullOrEmpty(savedNode.Title))
+        {
+            node.Title = savedNode.Title;
+        }
+        foreach (var port in savedNode.Ports)
+        {
+            node.AddPort(port.Alignment); // changes port id, but id not needed?
+        }
+        _diagram.Nodes.Add(node);
+    }
+    private void DrawDataNode(Point position)
+    {
+        var node = new DataNode(position);
+        node.AddPort(PortAlignment.Top);
+        node.AddPort(PortAlignment.Bottom);
+        node.Title = SetNodeTitle();
         _diagram.Nodes.Add(node);
     }
     private void LoadDataNode(NodeSerialize savedNode)
@@ -237,6 +245,14 @@
         node.Title = savedNode.Title;
         _diagram.Nodes.Add(node);
     }
+    private void DrawPowerNode(Point position)
+    {
+        var node = new PowerNode(position);
+        node.AddPort(PortAlignment.Top);
+        node.AddPort(PortAlignment.Bottom);
+        node.Title = SetNodeTitle();
+        _diagram.Nodes.Add(node);
+    }
     private void LoadPowerNode(NodeSerialize savedNode)
     {
         var node = new PowerNode(savedNode.Id, savedNode.Position);
@@ -245,13 +261,48 @@
         node.Title = savedNode.Title;
         _diagram.Nodes.Add(node);
     }
-    private string SetNodeTitle()
+
+    /* --- */
+
+
+
+    /* Save/Load Diagram */
+
+    private async Task SaveDiagram()
     {
-        if (!String.IsNullOrEmpty(_nodeTitle))
+        logger.LogInformation("Saving to local storage");
+        string json = _jsonSerializer.WriteToFile(_diagram); // only saving once per page load? not a problem when using database/file save/browser storage
+        await SaveDiagramToBrowserStorage(json);
+        logger.LogInformation("Successfully saved");
+    }
+    private async Task SaveDiagramToBrowserStorage(string json)
+    {
+        logger.LogInformation("Saving to browser storage");
+        await BrowserStorage.SetAsync("savedDiagram", json);
+    }
+    private async Task LoadDiagramFromBrowserStorage()
+    {
+        logger.LogInformation("Loading from storage");
+        var result = await BrowserStorage.GetAsync<string>("savedDiagram");
+        if (result.Success)
         {
-            return _nodeTitle;
+            logger.LogInformation("Loaded succesfully from storage");
+
+            _savedDiagram = _jsonSerializer.ReadDiagramFromJson(result.Value);
+            FillDiagram();
         }
-        return null;
+        else
+        {
+            logger.LogWarning("Loading from storage failed");
+
+            // show error
+        }
+    }
+    private async Task DeleteDiagramFromBrowserStorage()
+    {
+        logger.LogInformation("Deleting from storage");
+        await BrowserStorage.DeleteAsync("savedDiagram");
+        logger.LogInformation("Deleting from storage success"); // check for success
     }
     private void FillDiagram()
     {
@@ -288,37 +339,8 @@
                 case "NodeModel":
                     DrawNodeModel(savedNode);
                     break;
-                case "CustomNode":
-                    DrawCustomNode(savedNode);
-                    break;
             }
         }
-    }
-    private void DrawNodeModel(NodeSerialize savedNode)
-    {
-        NodeModel node = new NodeModel(savedNode.Id, savedNode.Position);
-        if (!String.IsNullOrEmpty(savedNode.Title))
-        {
-            node.Title = savedNode.Title;
-        }
-        foreach (var port in savedNode.Ports)
-        {
-            node.AddPort(port.Alignment); // changes port id, but id not needed?
-        }
-        _diagram.Nodes.Add(node);
-    }
-    private void DrawCustomNode(NodeSerialize savedNode) // duplicate code
-    {
-        NodeModel node = new CustomNodeCopy(savedNode.Id, savedNode.Position);
-        if (!String.IsNullOrEmpty(savedNode.Title))
-        {
-            node.Title = savedNode.Title;
-        }
-        foreach (var port in savedNode.Ports)
-        {
-            node.AddPort(port.Alignment);
-        }
-        _diagram.Nodes.Add(node);
     }
     private void DrawSavedLinks()
     {
@@ -349,11 +371,6 @@
             }
         }
     }
-    private async Task Serialize()
-    {
-        logger.LogInformation("Saving to local storage");
-        string json = jsonSerializer.WriteToFile(_diagram); // only saving once per page load? not a problem when using database/file save/browser storage
-        await SaveDiagram(json);
-        logger.LogInformation("Successfully saved");
-    }
+
+    /* --- */
 }

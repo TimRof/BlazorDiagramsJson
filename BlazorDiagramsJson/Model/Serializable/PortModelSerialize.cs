@@ -1,7 +1,7 @@
 ﻿using Blazor.Diagrams.Core.Geometry;
 using Blazor.Diagrams.Core.Models;
 
-namespace BlazorDiagramsJson.Model
+namespace BlazorDiagramsJson.Model.Serializable
 {
     public class PortModelSerialize
     {

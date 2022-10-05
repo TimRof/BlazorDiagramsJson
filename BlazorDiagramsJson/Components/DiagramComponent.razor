@@ -1,0 +1,22 @@
+﻿<div class="wrapper" ondragover="event.preventDefault();" @ondragover:preventDefault @ondrop="OnNodeDropMethodCalled">
+    <div class="diagram-container">
+        <CascadingValue Value="Diagram">
+            <DiagramCanvas>
+                <Widgets><NavigatorWidget Width="200" Height="133" DefaultStyle="true"></NavigatorWidget></Widgets>
+            </DiagramCanvas>
+        </CascadingValue>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Diagram Diagram { get; set; }
+    [Parameter]
+    public EventCallback<Diagram> DiagramChanged { get; set; }
+    [Parameter]
+    public EventCallback<DragEventArgs> OnNodeDrop { get; set; }
+    protected async Task OnNodeDropMethodCalled(DragEventArgs e)
+    {
+        await OnNodeDrop.InvokeAsync(e);
+    }
+}

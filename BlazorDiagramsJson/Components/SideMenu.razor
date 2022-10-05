@@ -1,0 +1,92 @@
+﻿<div class="col-4">
+    <div class="collapse @(IsVisible ? "show" : "")">
+        <div class="card card-body">
+            <div class="mb-2">
+                <label for="nodeTitle">Node Title:</label>
+                <input type="text" @oninput="OnNodeTitleChanged" placeholder="Leave blank for default" id="nodeTitle" />
+            </div>
+            <div class="col-6" style="border-color: green;border-style:solid;">
+                <div class="text-center" draggable="true" @ondragstart="args => OnDragNodeMethodCalled(0)" @onclick="() => OnAddNodeMethodCalled(0)">
+                    <span>Start Node</span>
+                </div>
+            </div>
+            <div class="col-6" style="border-color: red;border-style:solid;">
+                <div class="text-center" draggable="true" @ondragstart="args => OnDragNodeMethodCalled(1)" @onclick="() => OnAddNodeMethodCalled(1)">
+                    <span>End Node</span>
+                </div>
+            </div>
+            <div class="col-6" style="border-color: black;border-style:solid;">
+                <div class="text-center" draggable="true" @ondragstart="args => OnDragNodeMethodCalled(2)" @onclick="() => OnAddNodeMethodCalled(2)">
+                    <span>Data Node</span>
+                </div>
+            </div>
+            <div class="col-6" style="border-color: orange;border-style:solid;">
+                <div class="text-center" draggable="true" @ondragstart="args => OnDragNodeMethodCalled(3)" @onclick="() => OnAddNodeMethodCalled(3)">
+                    <span>Power Node</span>
+                </div>
+            </div>
+            <div class="col-6" style="border-color: blue;border-style:solid;">
+                <div class="text-center" draggable="true" @ondragstart="args => OnDragNodeMethodCalled(4)" @onclick="() => OnAddNodeMethodCalled(4)">
+                    <span>Default Node</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <button class="btn btn-success" @onclick="OnSaveDiagramMethodCalled">Save</button>
+        <button class="btn btn-warning" @onclick="OnLoadDiagramMethodCalled">Load</button>
+        <button class="btn btn-danger" @onclick="OnDeleteDiagramMethodCalled">Delete local</button>
+        <button class="btn btn-primary" data-toggle="collapse" @onclick="@(() => { IsVisible = !IsVisible; })">Nodes Drawer</button>
+        <button class="btn btn-dark" @onclick="OnZoomToFitMethodCalled">Zoom to fit</button>
+    </div>
+</div>
+
+@code {
+    protected bool IsVisible { get; set; }
+
+    [Parameter]
+    public string? NodeTitle { get; set; }
+    [Parameter]
+    public EventCallback<string> NodeTitleChanged { get; set; }
+    [Parameter]
+    public EventCallback<int> OnDragNode { get; set; }
+    [Parameter]
+    public EventCallback<int> OnNodeAdd { get; set; }
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnSaveDiagramMethod { get; set; }
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnLoadDiagramMethod { get; set; }
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnDeleteDiagramMethod { get; set; }
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnZoomToFitMethod { get; set; }
+    protected async Task OnDragNodeMethodCalled(int value)
+    {
+        await OnDragNode.InvokeAsync(value);
+    }
+    protected async Task OnAddNodeMethodCalled(int value)
+    {
+        await OnNodeAdd.InvokeAsync(value);
+    }
+    protected async Task OnSaveDiagramMethodCalled()
+    {
+        await OnSaveDiagramMethod.InvokeAsync();
+    }
+    protected async Task OnLoadDiagramMethodCalled()
+    {
+        await OnLoadDiagramMethod.InvokeAsync();
+    }
+    protected async Task OnDeleteDiagramMethodCalled()
+    {
+        await OnDeleteDiagramMethod.InvokeAsync();
+    }
+    protected async Task OnZoomToFitMethodCalled()
+    {
+        await OnZoomToFitMethod.InvokeAsync();
+    }
+    private Task OnNodeTitleChanged(ChangeEventArgs e)
+    {
+        NodeTitle = e.Value.ToString();
+        return NodeTitleChanged.InvokeAsync(NodeTitle);
+    }
+}

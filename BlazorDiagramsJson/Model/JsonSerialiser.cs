@@ -1,5 +1,6 @@
 ﻿using Blazor.Diagrams.Core;
 using Blazor.Diagrams.Core.Models;
+using BlazorDiagramsJson.Model.Serializable;
 using Newtonsoft.Json;
 using System.Data;
 using System.Runtime.CompilerServices;
@@ -35,7 +36,7 @@ namespace BlazorDiagramsJson.Model
             // get links
             foreach (var link in obj.Links)
             {
-                diagram.AddLink(new BaseLinkModelSerialize(link.SourcePort.Alignment, link.TargetPort.Alignment, link.SourceNode.Id, link.TargetNode.Id, link.SourcePort.Id, link.TargetPort.Id));
+                diagram.AddLink(new BaseLinkModelSerialize(link.Id, link.SourcePort.Alignment, link.TargetPort.Alignment, link.SourceNode.Id, link.TargetNode.Id, link.SourcePort.Id, link.TargetPort.Id));
             }
             return diagram;
         }
