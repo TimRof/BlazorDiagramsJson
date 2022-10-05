@@ -46,16 +46,15 @@
         <button class="btn btn-success" @onclick="Serialize">Save</button>
         <button class="btn btn-warning" @onclick="LoadDiagramFromBrowserStorage">Load</button>
         <button class="btn btn-danger" @onclick="DeleteDiagramFromBrowserStorage">Delete local</button>
-        <button class="btn btn-primary" data-toggle="collapse" @onclick="@(() => { IsVisible = !IsVisible; })">
-            Nodes Drawer
-        </button>
+        <button class="btn btn-primary" data-toggle="collapse" @onclick="@(() => { IsVisible = !IsVisible; })">Nodes Drawer</button>
+        <button class="btn btn-dark" @onclick="() => _diagram.ZoomToFit(50)">Zoom to fit</button>
     </div>
 </div>
 <div class="wrapper" ondragover="event.preventDefault();" @ondragover:preventDefault @ondrop="OnDrop">
     <div class="diagram-container">
         <CascadingValue Value="_diagram">
             <DiagramCanvas>
-                <Widgets><NavigatorWidget Width="300" Height="200" DefaultStyle="true"></NavigatorWidget></Widgets>
+                <Widgets><NavigatorWidget Width="200" Height="133" DefaultStyle="true"></NavigatorWidget></Widgets>
             </DiagramCanvas>
         </CascadingValue>
     </div>
@@ -82,7 +81,8 @@
                 Minimum = 0.5, // Minimum zoom value
                 Inverse = true, // Whether to inverse the direction of the zoom when using the wheel
                                 // Other
-            }
+            },
+            GridSize = 50
         };
     protected override void OnInitialized()
     {
