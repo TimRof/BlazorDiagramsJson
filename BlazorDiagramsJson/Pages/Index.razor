@@ -24,7 +24,7 @@
 
 @code {
     private WarningDialog? _warningModal;
-    private Diagram? _diagram { get; set; }
+    private Diagram _diagram { get; set; }
     private DiagramSerialize? _savedDiagram;
 
     private JsonSerializer _jsonSerializer = new();
@@ -39,13 +39,6 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-
-        _diagram = new Diagram(new DefaultDiagramOptions().GetDefaultOptions());
-
-        _diagram.RegisterModelComponent<StartNode, StartNodeComponent>();
-        _diagram.RegisterModelComponent<EndNode, EndNodeComponent>();
-        _diagram.RegisterModelComponent<DataNode, DataNodeComponent>();
-        _diagram.RegisterModelComponent<PowerNode, PowerNodeComponent>();
 
         HelloNode();
         RegisterEvents();
@@ -97,7 +90,7 @@
         {
             position = new(50, 50);
         }
-        switch (_nodeToAdd) // own method
+        switch (_nodeToAdd)
         {
             case 0:
                 DrawStartNode(position);
@@ -164,6 +157,33 @@
 
 
 
+    /* Validation */
+
+    private bool StartNodeExists()
+    {
+        if (_diagram.Nodes.OfType<StartNode>().Any())
+        {
+            logger.LogWarning("StartNode already present");
+            _warningModal.Open("Er kan maximaal één Start Node zijn.");
+
+            return true;
+        }
+        return false;
+    }
+    private bool EndNodeExists()
+    {
+        if (!_diagram.Nodes.OfType<EndNode>().Any())
+        {
+            logger.LogWarning("StartNode already present");
+            _warningModal.Open("Er moet minimaal één End Node zijn.");
+
+            return false;
+        }
+        return true;
+    }
+
+    /* --- */
+
     /* Nodes */
 
     private void HelloNode()
@@ -174,10 +194,8 @@
     }
     private void DrawStartNode(Point? position = null)
     {
-        if (_diagram.Nodes.OfType<StartNode>().Any())
+        if (StartNodeExists())
         {
-            logger.LogWarning("StartNode already present");
-            _warningModal.Open("Er kan maximaal één Start Node zijn.");
             return;
         }
         var node = new StartNode(position);
