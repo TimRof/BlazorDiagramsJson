@@ -5,6 +5,7 @@ namespace BlazorDiagramsJson.Model.Nodes
 {
     public class FlowActionNode : NodeModel
     {
+        // nodes data not updating unless clicked on
         public FlowActionNode(Point? position = null) : base(position)
         {
         }
@@ -23,49 +24,36 @@ namespace BlazorDiagramsJson.Model.Nodes
             Active = false;
             Finished = true;
         }
-        private void Cancel(CancellationToken cancellationToken)
+        public async Task ActivateAsync(string parentId)
         {
-            // Set status aborted + cleanup?
-            cancellationToken.ThrowIfCancellationRequested();
-        }
-        public async Task ActivateAsync(CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                Cancel(cancellationToken);
-                return;
-            }
-
             SetActive();
 
-            Action();
-            await FindAndActivateNextNodeAsync(cancellationToken);
+            await ActionAsync();
+
+            await FindAndActivateNextNodeAsync(parentId);
 
             SetFinished();
         }
-        public virtual void Action()
+        public virtual async Task ActionAsync()
         {
             // code / process to execute
         }
-        public Task FindAndActivateNextNodeAsync(CancellationToken cancellationToken)
+        public Task FindAndActivateNextNodeAsync(string parentId) // infinite loop now (get id from parent, check if not that)
         {
             var task = Task.Run(() =>
             {
-                foreach (var link in Links)
+                foreach (var port in Ports)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    foreach (var link in port.Links)
                     {
-                        Cancel(cancellationToken);
-                        return;
-                    }
-                    if (link.TargetNode != null && link.TargetNode is FlowActionNode)
-                    {
-                        FlowActionNode flowActionNode = (FlowActionNode)link.TargetNode;
-                        flowActionNode.ActivateAsync(cancellationToken);
+                        if (link.TargetNode != null && link.TargetNode is FlowActionNode && link.TargetNode.Id != parentId && link.TargetNode.Id != Id)
+                        {
+                            FlowActionNode flowActionNode = (FlowActionNode)link.TargetNode;
+                            flowActionNode.ActivateAsync(Id);
+                        }
                     }
                 }
             });
-
             return Task.CompletedTask;
         }
     }

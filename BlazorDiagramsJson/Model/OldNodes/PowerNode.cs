@@ -30,27 +30,5 @@ namespace BlazorDiagramsJson.Model.OldNodes
         {
             HasPower = false;
         }
-        public void UpdateOrder()
-        {
-            if (StartNode)
-            {
-                Order = 0;
-                return;
-            }
-
-            int lowest = 999;
-            foreach (var link in Links)
-            {
-                if (link.TargetNode is PowerNode)
-                {
-                    PowerNode node = (PowerNode)link.TargetNode;
-                    if (node.Order < lowest)
-                    {
-                        lowest = node.Order;
-                    }
-                }
-            }
-            Order = lowest + 1;
-        } 
     }
 }

@@ -18,6 +18,7 @@ namespace BlazorDiagramsJson.Model.Nodes
         public void Start()
         {
             Running = true;
+            ActivateAsync("Start");
         }
     }
 }

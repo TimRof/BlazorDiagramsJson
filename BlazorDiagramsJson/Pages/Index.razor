@@ -24,7 +24,7 @@
 
 @code {
     private WarningDialog? _warningModal;
-    private Diagram _diagram { get; set; }
+    private Diagram? _diagram { get; set; }
     private DiagramSerialize? _savedDiagram;
 
     private JsonSerializer _jsonSerializer = new();
@@ -40,8 +40,32 @@
     {
         base.OnInitialized();
 
+        Setup();
         HelloNode();
         RegisterEvents();
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        //if (firstRender) // Calls StateChanged every second
+        //{
+        //    new Timer(RefreshDiagram, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        //}
+    }
+    private async void RefreshDiagram(object state)
+    {
+        await InvokeAsync(StateHasChanged); // needed?
+    }
+    private void Setup()
+    {
+        _diagram = new Diagram(new DefaultDiagramOptions().GetDefaultOptions()); 
+        RegisterNodes();
+    }
+    private void RegisterNodes()
+    {
+        _diagram.RegisterModelComponent<StartNode, StartNodeComponent>();
+        _diagram.RegisterModelComponent<EndNode, EndNodeComponent>();
+        _diagram.RegisterModelComponent<DataNode, DataNodeComponent>();
+        _diagram.RegisterModelComponent<PowerNode, PowerNodeComponent>();
     }
     private void RegisterEvents()
     {
@@ -340,7 +364,7 @@
         foreach (var savedNode in _savedDiagram.Nodes)
         {
             // check for node type if custom nodes
-            switch (savedNode.NodeType.Name) // vies? use type instead of string
+            switch (savedNode.NodeType.Name) // vies? use type instead of string //var node = new savedNode.NodeType
             {
                 case "StartNode":
                     LoadStartNode(savedNode); // kan automatisch via type?
