@@ -11,4 +11,10 @@
     <PackageReference Include="Z.Blazor.Diagrams" Version="2.1.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Model\Nodes\StartNodeComponent - Old.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
 </Project>

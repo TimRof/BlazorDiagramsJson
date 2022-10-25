@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/test"
 @using Blazor.Diagrams.Core.Models.Base
 @using BlazorDiagramsJson.Components
 @using BlazorDiagramsJson.Model
@@ -10,19 +10,51 @@
 @inject ProtectedLocalStorage BrowserStorage
 @inject ILogger<Index> logger
 
-    <button @onclick="AddLabel">Label</button>
-
 <WarningDialog @ref="_warningModal"></WarningDialog>
 
-<SideMenu OnDragNode="ChangeNodeToAdd"
-          OnNodeAdd="OnNodeAddClick"
-          @bind-NodeTitle="_nodeTitle"
-          OnSaveDiagramMethod="SaveDiagram"
-          OnLoadDiagramMethod="LoadDiagramFromBrowserStorage"
-          OnDeleteDiagramMethod="DeleteDiagramFromBrowserStorage"
-          OnZoomToFitMethod="ZoomToFit"></SideMenu>
+<body>
+    <!-- h-100 takes the full height of the body-->
+    <div class="container-fluid h-100">
+        <!-- h-100 takes the full height
+                of the container-->
+        <div class="row h-100">
+            <div class="col-1 bg-light">
+                <img width="100%" src="https://www.cartaonline.nl/wp-content/webp-express/webp-images/uploads/2020/08/Carta-Online-logo-200-Wit.png.webp" alt="Carta Online Logo" />
+                <!-- Navigation links in sidebar-->
+                <a href="#">Nodes</a><br />
+                <br />
+            </div>
+            <div class="col-11" style="padding: 0;">
+                <!-- Top navbar -->
+                <nav class="navbar navbar-expand-lg navbar-light justify-content-center bg-light">
+                    @*<a class="navbar-brand" href="#">NavbarBrand</a>*@
+                    <!-- navbar links -->
+                    <div class="collapse navbar-collapse justify-content-center">
+                        <div class="navbar-nav">
+                            <div class="col-md-3 text-center">
+                                <i class="top-menu-icon bi-upload"></i>
+                                Save
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <i class="top-menu-icon bi-download"></i>
+                                Load
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <i class="top-menu-icon bi-bounding-box-circles"></i>
+                                Fit&nbsp;Zoom
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                <!-- Contains the main content of the webpage-->
+                <DiagramComponent OnNodeDrop="OnDrop" @bind-Diagram="_diagram"></DiagramComponent>
 
-<DiagramComponent OnNodeDrop="OnDrop" @bind-Diagram="_diagram"></DiagramComponent>
+            </div>
+        </div>
+    </div>
+</body>
+
+
 
 @code {
     private WarningDialog? _warningModal;
@@ -51,7 +83,7 @@
     {
         if (firstRender) // Calls StateChanged every second
         {
-            new Timer(RefreshDiagram, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1)); // use for autosave in browser storage
+            new Timer(RefreshDiagram, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
         }
     }
     private async void RefreshDiagram(object state)
@@ -162,11 +194,7 @@
     }
     private void AddLabel()
     {
-        if (_selectedLinkId == null){
-            return;
-        }
-        BaseLinkModel link = _diagram.Links.FirstOrDefault(x => x.Id == _selectedLinkId);
-        link.Labels.Add(new LinkLabelModel(link, "Text"));
+        var selectedNode = _diagram.Nodes.Where(x => x.Id == _selectedNodeId);
     }
     private void OnDrop(DragEventArgs e)
     {

@@ -1,0 +1,25 @@
+﻿<div class="custom-node @(Node.Selected ? " selected" : "")">
+    <div class="card" style="height: 100px; width: 250px; background-color: darkgreen; color: white; border-radius: 50%;">
+        <div class="card-body">
+            <h5 class="card-title" style="text-align: center;">Start Event</h5>
+            @Node.Id
+            <h5 class="card-title" style="text-align: center;">
+                @if (!String.IsNullOrEmpty(Node.Title)) { 
+                    <span>Title: @Node.Title</span> 
+                }
+                <button @onclick="Node.Start">Start</button>
+            </h5>
+        </div>
+
+    </div>
+
+    @foreach (var port in Node.Ports)
+    {
+        <PortRenderer Port="port"></PortRenderer>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public StartNode Node { get; set; }
+}

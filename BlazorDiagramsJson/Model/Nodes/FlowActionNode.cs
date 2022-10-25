@@ -30,7 +30,7 @@ namespace BlazorDiagramsJson.Model.Nodes
 
             await ActionAsync();
 
-            await FindAndActivateNextNodeAsync(parentId);
+            await FindAndActivateNextNodeAsync(parentId); // go to all next nodes or logic
 
             SetFinished();
         }

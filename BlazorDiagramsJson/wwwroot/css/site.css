@@ -80,7 +80,7 @@ a, .btn-link {
     background-image: linear-gradient(to right, rgb(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgb(0, 0, 0, 0.05) 1px, transparent 1px);
 }
 
-.custom-node.selected, .custom-node.selected .port {
+.custom-node.selected, .custom-node.selected {
     border: 1px solid #6e9fd4;
 }
 
@@ -93,12 +93,11 @@ a, .btn-link {
     height: 20px;
     border-radius: 50%;
     background-color: #f5f5f5;
-    border: 1px solid #d4d4d4;
     cursor: pointer;
     visibility: hidden;
 }
 
-    .custom-node .port:hover, .node > .card .port.has-links {
+    .port.has-links {
         visibility: visible;
         background-color: black;
     }

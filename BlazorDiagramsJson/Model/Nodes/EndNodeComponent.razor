@@ -1,14 +1,10 @@
 ﻿<div class="custom-node @(Node.Selected ? " selected" : "")">
-    <div class="card" style="height: 100px; width: 250px; background-color: darkred; color: white; border-radius: 50%;">
-        <div class="card-body">
-            <h5 class="card-title" style="text-align: center;">End Node</h5>
-            <h5 class="card-title" style="text-align: center;">
-                @if (!String.IsNullOrEmpty(Node.Title)) { 
-                    <span>Title: @Node.Title</span> 
-                }
-            </h5>
-        </div>
-
+    <div class="card" style="height: 35px; width: 140px; background-color: #eb4a56; color: white; border-radius: 25px; text-align: center;">
+        <h5>End</h5>
+        @if (!String.IsNullOrEmpty(Node.Title))
+        {
+            <span>Title: @Node.Title</span>
+        }
     </div>
 
     @foreach (var port in Node.Ports)
